@@ -500,26 +500,128 @@ IplImage* pyr3DNR(IplImage **img1, int width, int height){
     return dst;
 }
 
+void cheapEpsilon(IplImage *src,IplImage *dst){ // src, dst must be 16bit data
+    
+    int width   =src->width;
+    int height  =src->height;
+    int nChannels  =src->nChannels;
+    int rad = 3;
+
+    unsigned short *sbuf = (unsigned short *)src->imageData;
+    unsigned short *dbuf = (unsigned short *)dst->imageData;
+
+    
+    //int param1 = 30*4;//10bit
+    int param1 = 30*256;//16bit
+    
+    
+    unsigned char *weight_lut=(unsigned char *)calloc(65536,sizeof(unsigned char *));
+    for(int i=0; i<65536; i++){
+        if(i<param1){
+            weight_lut[i]=1;
+        }else{
+            weight_lut[i]=0;
+        }
+    }
+
+    for(int i=rad;i<height-rad;i++){
+        
+        for(int j=rad;j<width-rad;j++){
+            
+            for(int n=0; n<nChannels;n++){
+                
+                int ad = i*src->widthStep/2 + j*nChannels;
+                unsigned short temp = sbuf[ad+n];
+                int sum=0;
+                int count=0;
+
+                for(int s=-rad;s<=rad;s++){
+                    for(int t=-rad;t<=rad;t++){
+
+                        int ad_ = (i+s)*src->widthStep/2 + (j+t)*nChannels;
+                        unsigned short targ = sbuf[ad_+n];
+//                        if(abs(temp-targ)<param1){
+//                            sum+=targ;
+//                            count+=1;
+//                        }
+                        sum+=weight_lut[abs(temp-targ)]*targ;
+                        count+=weight_lut[abs(temp-targ)];
+//                            puts("...");
+                    }
+                }
+                if(count>0){
+                    dbuf[ad+n] = sum/count;
+                }else{
+                    dbuf[ad+n] = sbuf[ad+n];
+                }
+            }
+        }
+    }
+    free(weight_lut);
+}
+
+
+void convert8bitTo16bit(IplImage *src,IplImage *dst16){
+    
+    int width   =src->width;
+    int widthStep   =src->widthStep;
+    int height  =src->height;
+
+    unsigned char *buf8 = (unsigned char *)src->imageData;
+    unsigned short *buf16 = (unsigned short *)dst16->imageData;
+    
+    for(int i=0; i< height*widthStep ; i++){
+        int val = buf8[i];
+        buf16[i] = val << 8;
+    }
+/*
+    for(int i=0; i < height; i++){
+        for(int j=0; j < widthStep; j++){
+            int ad = i*widthStep + j;
+            int val = buf8[ad];
+            buf16[ad] = val << 8;
+        }
+    }
+ */
+}
+
+
 int main(int argc, char** argv){
 
   char* filename[PFRAME] ={
         "/Users/itoyuichi/github/playground/BackgroundSubtraction/lena.jpg",
 //        "/Users/itoyuichi/github/playground/BackgroundSubtraction/lena_80p.png"
   };
-    
+/*
+    // test 16bit
+    IplImage *src = cvLoadImage(filename[0],1);
+    IplImage *dst16=cvCreateImage(cvSize(src->width,src->height), IPL_DEPTH_16U, src->nChannels);
+    convert8bitTo16bit(src,dst16);
+    cvSaveImage("/Users/itoyuichi/github/playground/BackgroundSubtraction/lenna_dst16.png", dst16);
+    cvReleaseImage(&dst16);
+*/
+    // nr 16bit
+    IplImage *src16 = cvLoadImage("/Users/itoyuichi/github/playground/BackgroundSubtraction/lenna_dst16.png",-1);
+    IplImage *dst16=cvCreateImage(cvSize(src16->width,src16->height), IPL_DEPTH_16U, src16->nChannels);
+    cvCopy(src16,dst16);
+    cheapEpsilon(src16,dst16);
+    cvSaveImage("/Users/itoyuichi/github/playground/BackgroundSubtraction/lenna_dst16_nr.png", dst16);
+    cvReleaseImage(&dst16);
+/*
     IplImage**src;
     src = (IplImage **) cvAlloc (sizeof (IplImage *) * PFRAME);
     src[0] = cvLoadImage(filename[0],0);
     src[1] = cvLoadImage(filename[0],0);
 //    IplImage*src = cvLoadImage(filename[1]);
+  
     
-//    pyr3DNR(unsigned int **src, int width, int height){
-    IplImage*dst=pyr3DNR(src, src[0]->width, src[0]->height);
+    
+//    IplImage*dst=pyr3DNR(src, src[0]->width, src[0]->height);
     
     cvvNamedWindow("dst");
     cvvShowImage("dst",dst);
     cvWaitKey(0);
-    
+*/
     return 1;
 
 }
