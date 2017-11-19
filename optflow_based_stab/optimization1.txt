@@ -1,0 +1,75 @@
+//
+#ref
+https://qiita.com/kotaroito/items/4eb29d42d7f8c534332f
+
+# load text file
+frame, x, y, a = [], [],[], []
+for l in open('trajectory.txt').readlines():
+    data = l[:-1].split(' ')
+    frame += [int(data[0])]
+    x += [float(data[1])]
+    y += [float(data[2])]
+    a += [float(data[3])]
+
+# reshape
+frame_ = np.array(frame).reshape(-1, 1)
+x_ = np.array(x).reshape(-1, 1)
+y_ = np.array(y).reshape(-1, 1)
+a_ = np.array(a).reshape(-1, 1)
+
+
+//----------------------------------------------------//
+
+from sklearn.kernel_ridge import KernelRidge
+
+clf = KernelRidge(alpha=1, kernel='rbf',gamma=0.001, degree=10, coef0=10)
+#clf = KernelRidge(alpha=1, kernel='linear',gamma=0.1, degree=3, coef0=1)
+#clf = KernelRidge(alpha=1, kernel='poly',gamma=0.1, degree=6, coef0=10)
+clf.fit(frame_, x_)
+
+x2 = clf.predict(frame_)
+
+plt.plot(frame_, x_)
+plt.plot(frame_, p)
+
+
+//----------------------------------------------------//
+
+from sklearn.kernel_ridge import KernelRidge
+
+clf = KernelRidge(alpha=1, kernel='rbf',gamma=0.0001, degree=10, coef0=10)
+#clf = KernelRidge(alpha=1, kernel='linear',gamma=0.1, degree=3, coef0=1)
+#clf = KernelRidge(alpha=1, kernel='poly',gamma=0.1, degree=6, coef0=10)
+clf.fit(frame_, y_)
+
+y2 = clf.predict(frame_)
+
+plt.plot(frame_, y_)
+plt.plot(frame_, y2)
+
+
+//----------------------------------------------------//
+from sklearn.kernel_ridge import KernelRidge
+
+clf = KernelRidge(alpha=1, kernel='rbf',gamma=0.0001, degree=10, coef0=10)
+#clf = KernelRidge(alpha=1, kernel='linear',gamma=0.1, degree=3, coef0=1)
+#clf = KernelRidge(alpha=1, kernel='poly',gamma=0.1, degree=6, coef0=10)
+clf.fit(frame_, a_)
+
+a2 = clf.predict(frame_)
+
+plt.plot(frame_, a_)
+plt.plot(frame_, a2)
+
+
+//----------------------------------------------------//
+
+# write text file
+outfp = open('traj_krr.txt', 'w')
+for id in frame:
+#        outfp.write(str(id) + ' ' + str(x2[id-1]) + ' ' + str(y2[id-1]) + ' ' + str(a2[id-1]) + '\n')
+        outfp.write(str(id) + ' ' + str(x2[id-1][0]) + ' ' + str(y2[id-1][0]) + ' ' + str(a2[id-1][0]) + '\n')
+outfp.close()
+
+
+
