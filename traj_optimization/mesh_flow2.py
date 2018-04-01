@@ -49,11 +49,11 @@ y_pred_1_curr=0
 
 cur_off=64
 
-loop_num=5
+loop_num=10#5
 beta = 1
-alpha = 0.3#15
+alpha = 0.25#15
 
-old_num=16#32
+old_num=16#16#32
 new_num=4
 x2_rec           =np.zeros(old_num+new_num)
 x2_rec_tmp  =np.zeros(old_num+new_num)
@@ -87,12 +87,15 @@ for i in range(offset, length-offset):
             sumw = 1            
             #filtering each pos
             for k in range(-old_num, new_num):
-                # original
-                weight = math.exp( -(x2_rec[j+old_num] - x2_rec[k+old_num])*(x2_rec[j+old_num] - x2_rec[k+old_num])/(th1*th1) )
-                # modified 
-                #weight = (th1/(th1+abs(x2_rec[j+old_num] - x2_rec[k+old_num])) )* (th1/(th1+abs(x2_rec[j+old_num] - x2_rec[k+old_num])) )      
-                sumv=sumv+x2_rec[k+old_num]*weight*alpha
-                sumw=sumw+weight*alpha
+                if j != k:
+                    # original
+                    weightl = math.exp( -float(j - k)*float(j - k)/(100.0) )                
+                    weight = math.exp( -(x2_rec[j+old_num] - x2_rec[k+old_num])*(x2_rec[j+old_num] - x2_rec[k+old_num])/(3*th1*th1) )
+                    weight = weight * weightl
+                    # modified 
+                    #weight = (th1/(th1+abs(x2_rec[j+old_num] - x2_rec[k+old_num])) )* (th1/(th1+abs(x2_rec[j+old_num] - x2_rec[k+old_num])) )      
+                    sumv=sumv+x2_rec[k+old_num]*weight*alpha
+                    sumw=sumw+weight*alpha
 
             x2_rec_tmp[j+old_num]=  sumv/sumw + beta*(x2_rec_old[j+old_num]-x2_rec[j+old_num])
             
